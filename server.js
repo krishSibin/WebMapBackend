@@ -116,6 +116,8 @@ if (!MONGO_URI) {
 
 /* ---------------- API ---------------- */
 
+app.get("/", (req, res) => res.send("🚀 Nexira Spatial API is live. Status: Operational."));
+
 app.get("/api/geojson", (req, res) => {
     if (!isBooted) {
         return res.status(503).json({ error: "Server is initializing spatial data core..." });
