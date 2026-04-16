@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flood Dashboard | Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons via CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg-primary: #020617;
+            --bg-card: rgba(15, 23, 42, 0.6);
+            --accent-blue: #38bdf8;
+            --accent-emerald: #10b981;
+            --accent-red: #f43f5e;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(244, 63, 94, 0.05) 0%, transparent 40%);
+        }
+
+        .admin-card {
+            width: 95%;
+            max-width: 600px;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: var(--glass-shadow);
+            animation: fadeIn 0.6s ease-out;
+            margin: 1rem;
+        }
+
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .header-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(56, 189, 248, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+        }
+
+        .select-wrapper {
+            position: relative;
+        }
+
+        select {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9375rem;
+            appearance: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.1);
+        }
+
+        .textarea-container {
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--accent-emerald);
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.8125rem;
+            line-height: 1.5;
+            resize: none;
+            transition: all 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        button {
+            flex: 1;
+            padding: 1rem;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: #0ea5e9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(56, 189, 248, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        #status {
+            margin-top: 1.5rem;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .status-success {
+            display: flex !important;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-emerald);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .status-error {
+            display: flex !important;
+            background: rgba(244, 63, 94, 0.1);
+            color: var(--accent-red);
+            border: 1px solid rgba(244, 63, 94, 0.2);
+        }
+
+        /* Scrollbar styles */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        textarea::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        textarea::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        textarea::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Responsive Overrides */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .admin-card {
+                padding: 1.5rem;
+                border-radius: 16px;
+                width: 100%;
+                max-width: 500px;
+                margin: auto;
+            }
+
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 0.5rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .header-icon {
+                width: 40px;
+                height: 40px;
+                margin: 0 auto;
+            }
+
+            .header h1 {
+                font-size: 1.15rem;
+            }
+
+            .header p {
+                font-size: 0.7rem;
+            }
+
+            label {
+                font-size: 0.6rem;
+                margin-bottom: 0.4rem;
+            }
+
+            select {
+                padding: 0.7rem;
+                font-size: 0.8rem;
+            }
+
+            textarea {
+                height: 180px !important;
+                font-size: 0.7rem;
+                padding: 0.75rem;
+            }
+
+            .btn-group {
+                flex-direction: column-reverse;
+                gap: 0.5rem;
+                margin-top: 1.25rem;
+            }
+
+            button {
+                width: 100%;
+                padding: 0.75rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="admin-card">
+        <div class="header">
+            <div class="header-icon">
+                <i data-lucide="shield-alert"></i>
+            </div>
+            <div>
+                <h1>Layer Management</h1>
+                <p>Push real-time GeoJSON updates to the dashboard</p>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="layer">Target Layer</label>
+            <div class="select-wrapper">
+                <select id="layer">
+                    <option value="crop">Crop Zones</option>
+                    <option value="flood">Flood Risk Zones</option>
+                    <option value="roads">Road Impact</option>
+                    <option value="village">Village Layer</option>
+                    <option value="settlement">Settlement Areas</option>
+                    <option value="panchayat">Panchayath Boundary</option>
+                    <option value="taluk">Taluk Boundary</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="geojsonInput">GeoJSON Data</label>
+            <div class="textarea-container">
+                <textarea id="geojsonInput" placeholder='Paste your GeoJSON FeatureCollection here...'
+                    spellcheck="false"></textarea>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Or Attach File</label>
+            <input type="file" id="fileInput" accept=".json,.geojson" style="display: none;"
+                onchange="handleFileUpload(event)">
+            <button class="btn-secondary" onclick="document.getElementById('fileInput').click()" style="margin-top: 0;">
+                <i data-lucide="file-up" size="18"></i> Select GeoJSON File
+            </button>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-secondary" onclick="deleteLayer()"
+                style="border-color: var(--accent-red); color: var(--accent-red);">
+                <i data-lucide="trash-2" size="18"></i> Delete Layer
+            </button>
+            <button class="btn-primary" onclick="updateMap()">
+                <i data-lucide="send" size="18"></i> Push Update
+            </button>
+        </div>
+
+        <div id="status"></div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById("geojsonInput").value = e.target.result;
+                showStatus(`✓ File "${file.name}" loaded successfully`, "success");
+            };
+            reader.readAsText(file);
+        }
+
+        async function deleteLayer() {
+            const layer = document.getElementById("layer").value;
+            const confirmMsg = `Are you sure you want to PERMANENTLY delete the ${layer} layer?`;
+
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                showStatus("Deleting layer...", "success");
+
+                const response = await fetch(`/api/geojson/${layer}`, {
+                    method: "DELETE"
+                });
+
+                if (response.ok) {
+                    showStatus(`✓ ${layer} layer deleted permanently`, "success");
+                    document.getElementById("geojsonInput").value = "";
+                } else {
+                    showStatus("✕ Error deleting layer", "error");
+                }
+            } catch (err) {
+                showStatus("✕ Network error", "error");
+            }
+        }
+
+        async function updateMap() {
+            const text = document.getElementById("geojsonInput").value;
+            const layer = document.getElementById("layer").value;
+
+            if (!text.trim()) {
+                showStatus("Please enter GeoJSON data", "error");
+                return;
+            }
+
+            try {
+                const geojson = JSON.parse(text);
+                showStatus("Processing update...", "success");
+
+                const response = await fetch("/api/geojson", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        layer: layer,
+                        geojson: geojson
+                    })
+                });
+
+                if (response.ok) {
+                    showStatus("✓ Map updated successfully", "success");
+                } else {
+                    showStatus("✕ Error updating map server", "error");
+                }
+
+            } catch (err) {
+                showStatus("✕ Invalid JSON format", "error");
+            }
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById("status");
+            status.innerHTML = message;
+            status.className = type === "success" ? "status-success" : "status-error";
+            status.style.display = "flex";
+        }
+    </script>
+
+</body>
+
+</html>
