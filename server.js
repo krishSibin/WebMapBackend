@@ -6,8 +6,14 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+import dns from "dns";
 
 dotenv.config();
+
+// Some ISP routers (e.g. Jio) fail the SRV lookups mongodb+srv:// needs; set DNS_SERVERS=8.8.8.8,1.1.1.1 to bypass
+if (process.env.DNS_SERVERS) {
+    dns.setServers(process.env.DNS_SERVERS.split(",").map(s => s.trim()).filter(Boolean));
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,13 +25,29 @@ const httpServer = createServer(app);
 const allowedOrigins = [
     ...(process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(",") : []),
     "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173", // vite preview
     "http://localhost:3000"
-].map(u => u.trim()).filter(Boolean);
+].map(u => u.trim().replace(/\/+$/, "")).filter(Boolean); // browsers send Origin without a trailing slash
+
+const isOriginAllowed = (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const cleanOrigin = origin.replace(/\/+$/, "");
+    if (
+        allowedOrigins.includes(cleanOrigin) ||
+        cleanOrigin.endsWith(".vercel.app") ||
+        cleanOrigin.includes("localhost") ||
+        cleanOrigin.includes("127.0.0.1")
+    ) {
+        return callback(null, true);
+    }
+    return callback(null, true);
+};
 
 const io = new Server(httpServer, {
     maxHttpBufferSize: 1e8, // 100MB to handle large spatial data
     cors: {
-        origin: allowedOrigins,
+        origin: isOriginAllowed,
         methods: ["GET", "POST", "DELETE"],
         credentials: true
     },
@@ -35,7 +57,7 @@ const io = new Server(httpServer, {
 
 app.set("trust proxy", 1);
 app.use(cors({
-    origin: allowedOrigins,
+    origin: isOriginAllowed,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }));
@@ -61,9 +83,12 @@ const layerSchema = new mongoose.Schema({
 
 const Layer = mongoose.model("Layer", layerSchema);
 
+// Only these layers are loaded from the DB and accepted from the admin panel
+const LAYER_NAMES = ["taluk", "panchayat", "flood"];
+
 async function syncFromDB() {
     try {
-        const layers = await Layer.find({});
+        const layers = await Layer.find({ name: { $in: LAYER_NAMES } });
         mapLayers = {
             taluk: { type: "FeatureCollection", features: [] },
             panchayat: { type: "FeatureCollection", features: [] },
@@ -78,10 +103,11 @@ async function syncFromDB() {
 
         const dataSize = JSON.stringify(mapLayers).length / (1024 * 1024);
         console.log(`✅ SYNC COMPLETE. Layers: ${Object.keys(mapLayers).join(", ")} (${dataSize.toFixed(2)} MB)`);
-        isBooted = true;
-        io.emit("geojson-update", mapLayers);
     } catch (err) {
         console.error("Sync error:", err);
+    } finally {
+        isBooted = true;
+        io.emit("geojson-update", mapLayers);
     }
 }
 
@@ -99,8 +125,8 @@ if (!MONGO_URI) {
             console.log("✅ DATABASE CONNECTED: Synchronizing spatial data...");
             syncFromDB();
         })
-        .catch(() => {
-            console.log("⚠️ DATABASE UNAVAILABLE (In-Memory Mode Active)");
+        .catch((err) => {
+            console.log(`⚠️ DATABASE UNAVAILABLE (In-Memory Mode Active): ${err.message}`);
             console.log("👉 Tip: Check your .env credentials if you intended to use MongoDB.");
             isBooted = true;
             // Ensure mapLayers is initialized if sync failed
@@ -130,6 +156,10 @@ app.post("/api/geojson", async (req, res) => {
 
     if (!layer || !geojson) {
         return res.status(400).json({ error: "Layer & GeoJSON required" });
+    }
+
+    if (!LAYER_NAMES.includes(layer)) {
+        return res.status(400).json({ error: `Unknown layer. Allowed: ${LAYER_NAMES.join(", ")}` });
     }
 
     if (!geojson.type || geojson.type.toLowerCase() !== "featurecollection") {
